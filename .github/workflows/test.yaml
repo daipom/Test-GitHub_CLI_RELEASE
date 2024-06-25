@@ -2,18 +2,42 @@ name: Test
 on:
   - push
 jobs:
-  build:
-    name: Test
-    runs-on: ubuntu-20.04
-    timeout-minutes: 10
+  define-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      contexts: ${{ steps.set-contexts.outputs.contexts }}
+    steps:
+      - id: set-contexts
+        run: |
+          contexts=$(echo '[
+            "debian-azureblob",
+            "debian-cloudwatch",
+            "debian-elasticsearch7",
+            "debian-elasticsearch8",
+            "debian-forward",
+            "debian-gcs",
+            "debian-graylog",
+            "debian-kafka",
+            "debian-kafka2",
+            "debian-kinesis",
+            "debian-logentries",
+            "debian-loggly",
+            "debian-logzio",
+            "debian-opensearch",
+            "debian-papertrail",
+            "debian-s3",
+            "debian-syslog"
+            ]' | jq -c)
+          echo "contexts=$contexts" >> "$GITHUB_OUTPUT"
+  amd64:
+    needs: define-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        context: ${{ fromJSON(needs.define-matrix.outputs.contexts) }}
     steps:
       - uses: actions/checkout@v3
-      - name: Create Release
-        if: |
-          startsWith(github.ref, 'refs/tags/')
+      - name: Test
         run: |
-          gh release create ${GITHUB_REF_NAME} \
-          --notes-file README.md \
-          README.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo ${{ matrix.context }}
