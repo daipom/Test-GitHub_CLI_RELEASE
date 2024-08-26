@@ -40,7 +40,7 @@ jobs:
           echo "${{ github.ref_type }}"
           if [ "${{ github.ref_type }}" != tag ]; then
             exit 0
-          done
+          fi
           for component in ${{ join(fromJSON(env.ALL_COMPONENTS), ' ') }}; do
             if [[ ${{ github.ref_name }} == *"$component"* ]]; then
               echo "for_all=false" >> "$GITHUB_OUTPUT"
