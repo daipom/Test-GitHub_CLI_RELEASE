@@ -1,43 +1,73 @@
 name: Test
 on:
-  - push
+  pull_request:
+  push:
+    tags:
+      - v1.*
+
+env:
+  PUSH: ${{ startsWith(github.ref, 'refs/tags/v1.') }}
 jobs:
   define-matrix:
     runs-on: ubuntu-latest
+    env:
+      ALL_COMPONENTS: >
+        [
+        "debian-azureblob",
+        "debian-cloudwatch",
+        "debian-elasticsearch7",
+        "debian-elasticsearch8",
+        "debian-forward",
+        "debian-gcs",
+        "debian-graylog",
+        "debian-kafka2",
+        "debian-kafka",
+        "debian-kinesis",
+        "debian-logentries",
+        "debian-loggly",
+        "debian-logzio",
+        "debian-opensearch",
+        "debian-papertrail",
+        "debian-s3",
+        "debian-syslog"
+        ]
     outputs:
-      contexts: ${{ steps.set-contexts.outputs.contexts }}
+      components: >
+        ${{ steps.arrange-components.outputs.for_all == 'true' && env.ALL_COMPONENTS
+        || format('["{0}"]', steps.arrange-components.outputs.component) }}
     steps:
-      - id: set-contexts
+      - id: arrange-components
         run: |
-          contexts=$(echo '[
-            "debian-azureblob",
-            "debian-cloudwatch",
-            "debian-elasticsearch7",
-            "debian-elasticsearch8",
-            "debian-forward",
-            "debian-gcs",
-            "debian-graylog",
-            "debian-kafka",
-            "debian-kafka2",
-            "debian-kinesis",
-            "debian-logentries",
-            "debian-loggly",
-            "debian-logzio",
-            "debian-opensearch",
-            "debian-papertrail",
-            "debian-s3",
-            "debian-syslog"
-            ]')
-          echo "contexts=$contexts" >> "$GITHUB_OUTPUT"
-  amd64:
+          echo "for_all=true" >> "$GITHUB_OUTPUT"
+          for component in ${{ join(fromJSON(env.ALL_COMPONENTS), ' ') }}; do
+            if [[ ${{ github.ref_name }} == *"$component"* ]]; then
+              echo "for_all=false" >> "$GITHUB_OUTPUT"
+              echo "component=$component" >> "$GITHUB_OUTPUT"
+              break
+            fi
+          done
+  build:
     needs: define-matrix
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        context: ${{ fromJSON(needs.define-matrix.outputs.contexts) }}
+        component: ${{ fromJSON(needs.define-matrix.outputs.components) }}
     steps:
-      - uses: actions/checkout@v3
-      - name: Test
+      - name: Build
         run: |
-          echo ${{ matrix.context }}
+          echo ${{ matrix.component }}
+          echo ${{ env.PUSH }}
+  push:
+    if: ${{ env.PUSH }}
+    needs: [define-matrix, test]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        component: ${{ fromJSON(needs.define-matrix.outputs.components) }}
+    steps:
+      - name: Push
+        run: |
+          echo ${{ matrix.component }}
+          echo PUSH!!
