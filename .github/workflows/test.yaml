@@ -5,8 +5,6 @@ on:
     tags:
       - v1.*
 
-env:
-  PUSH: ${{ startsWith(github.ref, 'refs/tags/v1.') }}
 jobs:
   define-matrix:
     runs-on: ubuntu-latest
@@ -39,6 +37,10 @@ jobs:
       - id: arrange-components
         run: |
           echo "for_all=true" >> "$GITHUB_OUTPUT"
+          echo "${{ github.ref_type }}"
+          if [ "${{ github.ref_type }}" != tag ]; then
+            exit 0
+          done
           for component in ${{ join(fromJSON(env.ALL_COMPONENTS), ' ') }}; do
             if [[ ${{ github.ref_name }} == *"$component"* ]]; then
               echo "for_all=false" >> "$GITHUB_OUTPUT"
@@ -57,9 +59,9 @@ jobs:
       - name: Build
         run: |
           echo ${{ matrix.component }}
-          echo ${{ env.PUSH }}
+          echo ${{ startsWith(github.ref, 'refs/tags/v1.') }}
   push:
-    if: ${{ env.PUSH }}
+    if: ${{ startsWith(github.ref, 'refs/tags/v1.') }}
     needs: [define-matrix, test]
     runs-on: ubuntu-latest
     strategy:
