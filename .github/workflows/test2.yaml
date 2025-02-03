@@ -41,7 +41,7 @@ jobs:
           - runs-on: ubuntu-latest
           - runs-on: ubuntu-24.04-arm
             component: arm64
-    runs-on: matrix.runs-on
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - name: Build
         run: |
