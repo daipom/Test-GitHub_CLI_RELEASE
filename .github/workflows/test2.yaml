@@ -46,6 +46,7 @@ jobs:
       - name: Build
         run: |
           echo ${{ matrix.component }}
+          echo ${{ matrix.runs-on }}
           echo ${{ startsWith(github.ref, 'refs/tags/v1.') }}
   push:
     if: ${{ startsWith(github.ref, 'refs/tags/v1.') }}
