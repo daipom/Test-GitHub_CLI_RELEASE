@@ -11,3 +11,4 @@ jobs:
           echo ${{ github.ref }}
           echo $GITHUB_REF_NAME
           echo ${{ github.ref_name }}
+          echo $Env:GITHUB_REF_NAME
