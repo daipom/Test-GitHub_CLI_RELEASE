@@ -1,0 +1,13 @@
+name: dispatch
+on:
+  workflow_dispatch
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - name: Test
+        run: |
+          echo $GITHUB_REF
+          echo ${{ github.ref }}
+          echo $GITHUB_REF_NAME
+          echo ${{ github.ref_name }}
